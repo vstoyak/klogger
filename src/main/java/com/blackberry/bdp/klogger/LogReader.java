@@ -16,10 +16,20 @@
 package com.blackberry.bdp.klogger;
 
 import com.blackberry.bdp.common.jmx.MetricRegistrySingleton;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.services.pubsub.Pubsub;
+import com.google.api.services.pubsub.PubsubScopes;
+import com.google.api.services.pubsub.model.PublishRequest;
+import com.google.api.services.pubsub.model.PubsubMessage;
+import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,6 +107,27 @@ public abstract class LogReader implements Runnable {
 	@Override
 	public void run() {
 		UTF8Validator utf8Validator = null;
+
+		GoogleCredential credential=null;
+
+		// Use credentials from file if available
+		try {
+			credential = GoogleCredential
+					.fromStream(new FileInputStream("credentials.json"))
+					.createScoped(PubsubScopes.all());
+		} catch (IOException e) {
+			try{
+				credential = GoogleCredential.getApplicationDefault()
+						.createScoped(PubsubScopes.all());
+			} catch(Exception e1){
+
+			}
+
+		}
+
+		final Pubsub client = new Pubsub.Builder(Utils.getDefaultTransport(), Utils.getDefaultJsonFactory(), credential)
+				.setApplicationName("vstoyak-kloger-test")
+				.build();
 
 		if (validateUTF8) {
 			utf8Validator = new UTF8Validator();
@@ -184,7 +215,25 @@ public abstract class LogReader implements Runnable {
 							sendBuffer.put(bytes, start, newline - start);
 						}
 
-						producer.send(sendBytes, 0, sendBuffer.position());
+
+						String message = "test Message 1";
+						if (!"".equals(message)) {
+							String fullTopicName = String.format("projects/%s/topics/%s","bbm-staging","vstoyak-kloger-test");
+							PubsubMessage pubsubMessage = new PubsubMessage();
+							//pubsubMessage.encodeData(message.getBytes("UTF-8"));
+							pubsubMessage.encodeData(sendBytes);
+							PublishRequest publishRequest = new PublishRequest();
+							publishRequest.setMessages(ImmutableList.of(pubsubMessage));
+
+							try {
+								client.projects().topics()
+										.publish(fullTopicName, publishRequest)
+										.execute();
+							} catch (Exception e) {
+								LOG.info("PubSub exception",e);
+							}
+						}
+						//producer.send(sendBytes, 0, sendBuffer.position());
 
 						start = newline + 1;
 						continue;
@@ -215,7 +264,26 @@ public abstract class LogReader implements Runnable {
 								sendBuffer.put(bytes, 0, maxLine);
 							}
 
-							producer.send(sendBytes, 0, sendBuffer.position());
+
+							String message = "test Message 2";
+							if (!"".equals(message)) {
+								String fullTopicName = String.format("projects/%s/topics/%s","bbm-staging","vstoyak-kloger-test");
+								PubsubMessage pubsubMessage = new PubsubMessage();
+								//pubsubMessage.encodeData(message.getBytes("UTF-8"));
+								pubsubMessage.encodeData(sendBytes);
+								PublishRequest publishRequest = new PublishRequest();
+								publishRequest.setMessages(ImmutableList.of(pubsubMessage));
+
+								try {
+									client.projects().topics()
+											.publish(fullTopicName, publishRequest)
+											.execute();
+								} catch (Exception e) {
+									LOG.info("PubSub exception",e);
+								}
+							}
+
+							//producer.send(sendBytes, 0, sendBuffer.position());
 
 							start = 0;
 							break;

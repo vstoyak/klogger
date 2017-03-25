@@ -55,7 +55,7 @@ public class KLoggerTest {
 		byte[] outBytes = testline.getBytes("UTF8");
 		Socket s = new Socket("localhost", 10000);
 		OutputStream out = s.getOutputStream();
-		for (int i = 0; i < 100000; i++) {
+		for (int i = 0; i < 2; i++) {
 			out.write(outBytes);
 		}
 	}
@@ -66,7 +66,7 @@ public class KLoggerTest {
 		byte[] outBytes = testline.getBytes("UTF8");
 		Socket s = new Socket("localhost", 10000);
 		OutputStream out = s.getOutputStream();
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 2; i++) {
 			out.write(outBytes);
 		}
 	}
@@ -77,7 +77,7 @@ public class KLoggerTest {
 		byte[] outBytes = testline.getBytes("UTF8");
 		Socket s = new Socket("localhost", 10000);
 		OutputStream out = s.getOutputStream();
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 2; i++) {
 			out.write(outBytes, 0, 20);
 			Thread.sleep(10);
 			out.write(outBytes, 20, outBytes.length - 20);
